@@ -2,7 +2,7 @@
 
 Complete AI-powered resume analysis and optimization platform.
 
-## 🚀 Features
+## Features
 
 ### Backend
 - **JWT Authentication**: Secure signup/login with token refresh
@@ -19,12 +19,11 @@ Complete AI-powered resume analysis and optimization platform.
 - **Dashboard**: Real-time analytics and resume management
 - **React Query**: Server state management with caching
 
-## 📋 Tech Stack
+## Tech Stack
 
 ### Backend
-- FastAPI (async)
+- Django
 - PostgreSQL (or SQLite for dev)
-- SQLAlchemy ORM
 - Celery + Redis
 - spaCy + sentence-transformers
 
@@ -90,9 +89,9 @@ npm run dev
 
 ✅ **Completed**
 - Project structure and folder organization
-- FastAPI backend with SQLite database
+- Django backend with SQLite database
 - JWT authentication (signup/login/logout)
-- Pydantic v2 models and validation
+- v2 models and validation
 - Service layer architecture
 - Zustand auth state management
 - Next.js 14 with App Router
@@ -235,8 +234,8 @@ cd frontend && npm test
 
 - [x] Backend project structure
 - [x] FastAPI with CORS
-- [x] SQLAlchemy models (User, Resume, Job, Analytics)
-- [x] Pydantic v2 schemas
+- [x] SQLmodels (User, Resume, Job, Analytics)
+- [x] v2 schemas
 - [x] JWT authentication
 - [x] Password hashing (bcrypt)
 - [x] SQLite database
@@ -270,7 +269,7 @@ For bugs or questions, open an issue on GitHub.
 └──────────────────────────────┬──────────────────────────────────┘
                                │ HTTPS
 ┌──────────────────────────────▼──────────────────────────────────┐
-│              API GATEWAY (FastAPI)                               │
+│              API GATEWAY (Django)                               │
 │  ├─ Auth Endpoints (signup/login/logout)                        │
 │  ├─ Resume Upload & Progress                                    │
 │  ├─ Job Description Upload                                      │
