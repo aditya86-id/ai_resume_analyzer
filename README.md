@@ -233,7 +233,7 @@ cd frontend && npm test
 ## 📝 Implementation Checklist
 
 - [x] Backend project structure
-- [x] FastAPI with CORS
+- [x] Django with CORS
 - [x] SQLmodels (User, Resume, Job, Analytics)
 - [x] v2 schemas
 - [x] JWT authentication

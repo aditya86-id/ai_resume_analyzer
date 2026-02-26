@@ -1,0 +1,43 @@
+
+Django>=4.2
+djangorestframework
+django-cors-headers
+python-dotenv
+
+
+psycopg2-binary
+
+# =========================
+# Resume Parsing
+# =========================
+pdfplumber
+python-docx
+
+# =========================
+# Async Tasks
+# =========================
+celery
+redis
+django-celery-results
+
+# =========================
+# AI (Gemini)
+# =========================
+google-generativeai
+
+# =========================
+# Auth & Security
+# =========================
+djangorestframework-simplejwt
+
+# =========================
+# Storage (for cloud later)
+# =========================
+django-storages
+boto3
+
+# =========================
+# Dev & Utilities
+# =========================
+gunicorn
+whitenoise

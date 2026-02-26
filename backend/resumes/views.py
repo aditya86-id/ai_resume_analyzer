@@ -22,3 +22,12 @@ class ResumeUploadView(APIView):
             return Response({"message": "Uploaded", "resume_id": resume.id})
 
         return Response(serializer.errors)
+    
+    
+class ResumeDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        resume = Resume.objects.get(id=pk, user=request.user)
+        serializer = ResumeSerializer(resume)
+        return Response(serializer.data)
