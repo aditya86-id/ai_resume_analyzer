@@ -14,6 +14,7 @@ export const resumeAPI = {
   upload: (formData) => apiClient.upload('/resumes/upload/', formData),
   getById: (id) => apiClient.get(`/resumes/${id}/`),
   delete: (id) => apiClient.delete(`/resumes/${id}/`),
+  analyze: (data) => apiClient.post('/analyze/', data),
   getAnalysis: (resumeId) => apiClient.get(`/resumes/${resumeId}/analysis/`),
   getSkills: (resumeId) => apiClient.get(`/resumes/${resumeId}/skills/`),
   getMatching: (resumeId) => apiClient.get(`/resumes/${resumeId}/matching/`),

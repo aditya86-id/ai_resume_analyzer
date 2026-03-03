@@ -25,6 +25,12 @@ export function Header() {
                 My Resumes
               </Link>
               <Link
+                to="/suggestions"
+                className="text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2"
+              >
+                ✨ AI Suggestions
+              </Link>
+              <Link
                 to="/dashboard"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >

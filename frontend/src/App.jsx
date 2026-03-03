@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ResumesPage } from './pages/ResumesPage';
 import { ResumeDetailPage } from './pages/ResumeDetailPage';
+import { SuggestionsPage } from './pages/SuggestionsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { JobsPage } from './pages/JobsPage';
 
@@ -44,6 +45,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ResumesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/suggestions"
+              element={
+                <ProtectedRoute>
+                  <SuggestionsPage />
                 </ProtectedRoute>
               }
             />

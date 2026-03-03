@@ -57,6 +57,32 @@ class ResumeAnalysis(models.Model):
     # Feedback and Suggestions
     feedback = models.TextField()
     suggestions = models.JSONField(default=list)  # List of improvement suggestions
+    ai_suggestions = models.JSONField(default=list)  # AI-generated suggestions with priorities
+    
+    # ATS and Pattern Analysis
+    ats_analysis = models.JSONField(default=dict)  # ATS compatibility analysis
+    pattern_issues = models.JSONField(default=dict)  # Detected resume pattern issues
+    
+    # Additional Analysis Fields
+    strengths = models.JSONField(default=list)  # Identified resume strengths
+    resume_quality_summary = models.TextField(blank=True, default="")  # One-sentence quality summary
+    
+    # Career Insights
+    career_stage = models.CharField(
+        max_length=50,
+        choices=[
+            ("entry", "Entry-level"),
+            ("junior", "Junior"),
+            ("mid", "Mid-level"),
+            ("senior", "Senior"),
+            ("executive", "Executive"),
+        ],
+        default="mid"
+    )
+    industry_match = models.CharField(max_length=255, blank=True, default="")  # Matched industry
+    
+    # ATS Recommendations
+    ats_recommendations = models.JSONField(default=list)  # Best practices recommendations
     
     # Extracted Information
     extracted_text = models.TextField(blank=True)
@@ -106,6 +132,7 @@ class Skill(models.Model):
     class Meta:
         unique_together = ["analysis", "name"]
         verbose_name_plural = "Skills"
+        ordering = ["name"]
 
     def __str__(self):
         return f"{self.name} - {self.level}"

@@ -96,6 +96,7 @@ export function ResumeDetailPage() {
         <div className="space-y-6">
           {analysis ? (
             <>
+              {/* Score Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <ScoreCard label="Overall Score" score={analysis.overall_score} />
                 <ScoreCard label="Format" score={analysis.format_score} />
@@ -105,22 +106,209 @@ export function ResumeDetailPage() {
                 <ScoreCard label="Impact" score={analysis.impact_score} />
               </div>
 
+              {/* Resume Quality Summary */}
+              {analysis.resume_quality_summary && (
+                <div className="card bg-blue-50 border-l-4 border-blue-500">
+                  <h2 className="text-lg font-semibold text-blue-900 mb-2">Resume Quality Summary</h2>
+                  <p className="text-blue-800">{analysis.resume_quality_summary}</p>
+                </div>
+              )}
+
+              {/* Career Stage & Industry Match */}
+              {(analysis.career_stage || analysis.industry_match) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {analysis.career_stage && (
+                    <div className="card">
+                      <p className="text-sm text-gray-600">Career Stage</p>
+                      <p className="text-lg font-semibold text-primary-600">{analysis.career_stage.charAt(0).toUpperCase() + analysis.career_stage.slice(1).replace('-', ' ')}</p>
+                    </div>
+                  )}
+                  {analysis.industry_match && (
+                    <div className="card">
+                      <p className="text-sm text-gray-600">Industry Match</p>
+                      <p className="text-lg font-semibold text-primary-600">{analysis.industry_match}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Strengths */}
+              {analysis.strengths && analysis.strengths.length > 0 && (
+                <div className="card bg-green-50">
+                  <h2 className="text-xl font-bold mb-4 text-green-900">Your Strengths</h2>
+                  <ul className="space-y-2">
+                    {analysis.strengths.map((strength, idx) => (
+                      <li key={idx} className="flex gap-3">
+                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="text-gray-700">{strength}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* AI Suggestions (NEW) */}
+              {analysis.ai_suggestions && analysis.ai_suggestions.length > 0 && (
+                <div className="card border-l-4 border-orange-500">
+                  <h2 className="text-xl font-bold mb-4 text-orange-900">AI-Powered Suggestions</h2>
+                  <div className="space-y-4">
+                    {analysis.ai_suggestions.map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded border-l-4 ${
+                          suggestion.priority === 'High'
+                            ? 'bg-red-50 border-red-500'
+                            : suggestion.priority === 'Medium'
+                            ? 'bg-yellow-50 border-yellow-500'
+                            : 'bg-blue-50 border-blue-500'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex gap-2 items-center">
+                            <span className={`px-3 py-1 rounded text-sm font-semibold text-white ${
+                              suggestion.priority === 'High'
+                                ? 'bg-red-600'
+                                : suggestion.priority === 'Medium'
+                                ? 'bg-yellow-600'
+                                : 'bg-blue-600'
+                            }`}>
+                              {suggestion.priority} Priority
+                            </span>
+                            <span className="text-sm font-semibold text-gray-700">{suggestion.category || suggestion.area}</span>
+                          </div>
+                        </div>
+                        <p className="font-semibold text-gray-800 mb-2">{suggestion.suggestion}</p>
+                        {suggestion.action && (
+                          <p className="text-sm text-gray-600 italic">
+                            💡 <strong>Action:</strong> {suggestion.action}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Standard Feedback */}
               <div className="card">
                 <h2 className="text-xl font-bold mb-4">Feedback</h2>
                 <p className="text-gray-700 whitespace-pre-wrap">{analysis.feedback}</p>
               </div>
 
+              {/* Basic Suggestions */}
               {analysis.suggestions && analysis.suggestions.length > 0 && (
                 <div className="card">
-                  <h2 className="text-xl font-bold mb-4">Suggestions</h2>
+                  <h2 className="text-xl font-bold mb-4">Additional Tips</h2>
                   <ul className="space-y-2">
                     {analysis.suggestions.map((suggestion, idx) => (
                       <li key={idx} className="flex gap-3">
-                        <span className="text-primary-600">✓</span>
+                        <span className="text-primary-600">💡</span>
                         <span className="text-gray-700">{suggestion}</span>
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* ATS Analysis */}
+              {analysis.ats_analysis && (
+                <div className="card border-l-4 border-purple-500">
+                  <h2 className="text-xl font-bold mb-4 text-purple-900">ATS Compatibility</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="p-4 bg-purple-50 rounded">
+                      <p className="text-sm text-gray-600">ATS Friendliness Score</p>
+                      <p className="text-3xl font-bold text-purple-600">{analysis.ats_analysis.ats_friendliness_score || 0}/100</p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded">
+                      <p className="text-sm text-gray-600">Parsing Risk</p>
+                      <p className={`text-lg font-bold ${
+                        analysis.ats_analysis.parsing_risk === 'low'
+                          ? 'text-green-600'
+                          : analysis.ats_analysis.parsing_risk === 'medium'
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                      }`}>
+                        {(analysis.ats_analysis.parsing_risk || 'unknown').charAt(0).toUpperCase() + (analysis.ats_analysis.parsing_risk || 'unknown').slice(1)}
+                      </p>
+                    </div>
+                  </div>
+                  {analysis.ats_analysis.issues && analysis.ats_analysis.issues.length > 0 && (
+                    <div className="mb-3">
+                      <p className="font-semibold text-gray-700 mb-2">Issues Found:</p>
+                      <ul className="space-y-1">
+                        {analysis.ats_analysis.issues.map((issue, idx) => (
+                          <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                            <span className="text-red-500">⚠️</span> {issue}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.ats_recommendations && analysis.ats_recommendations.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-gray-700 mb-2">Recommendations:</p>
+                      <ul className="space-y-1">
+                        {analysis.ats_recommendations.map((rec, idx) => (
+                          <li key={idx} className="text-sm text-gray-600">{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pattern Issues */}
+              {analysis.pattern_issues && Object.keys(analysis.pattern_issues).length > 0 && (
+                <div className="card">
+                  <h2 className="text-xl font-bold mb-4">Pattern Analysis</h2>
+                  {analysis.pattern_issues.formatting_issues && analysis.pattern_issues.formatting_issues.length > 0 && (
+                    <div className="mb-4">
+                      <p className="font-semibold text-gray-700 mb-2">Formatting Issues:</p>
+                      <ul className="space-y-1">
+                        {analysis.pattern_issues.formatting_issues.map((issue, idx) => (
+                          <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                            <span>•</span>{issue}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.pattern_issues.content_issues && analysis.pattern_issues.content_issues.length > 0 && (
+                    <div className="mb-4">
+                      <p className="font-semibold text-gray-700 mb-2">Content Issues:</p>
+                      <ul className="space-y-1">
+                        {analysis.pattern_issues.content_issues.map((issue, idx) => (
+                          <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                            <span>•</span>{issue}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.pattern_issues.keyword_issues && analysis.pattern_issues.keyword_issues.length > 0 && (
+                    <div className="mb-4">
+                      <p className="font-semibold text-gray-700 mb-2">Keyword Issues:</p>
+                      <ul className="space-y-1">
+                        {analysis.pattern_issues.keyword_issues.map((issue, idx) => (
+                          <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                            <span>•</span>{issue}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.pattern_issues.structure_issues && analysis.pattern_issues.structure_issues.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-gray-700 mb-2">Structure Issues:</p>
+                      <ul className="space-y-1">
+                        {analysis.pattern_issues.structure_issues.map((issue, idx) => (
+                          <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                            <span>•</span>{issue}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </>

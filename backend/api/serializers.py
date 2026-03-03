@@ -74,7 +74,7 @@ class SkillSerializer(serializers.ModelSerializer):
 # ========================================================
 
 class ResumeAnalysisDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for ResumeAnalysis with skills."""
+    """Detailed serializer for ResumeAnalysis with skills and advanced analysis."""
     skills = SkillSerializer(many=True, read_only=True)
     
     class Meta:
@@ -82,8 +82,10 @@ class ResumeAnalysisDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id", "overall_score", "format_score", "keywords_score",
             "experience_score", "education_score", "impact_score",
-            "feedback", "suggestions", "status", "skills",
-            "created_at", "updated_at"
+            "feedback", "suggestions", "ai_suggestions", "strengths",
+            "resume_quality_summary", "ats_analysis", "pattern_issues",
+            "ats_recommendations", "career_stage", "industry_match",
+            "status", "skills", "created_at", "updated_at"
         ]
         read_only_fields = fields
 
@@ -96,7 +98,10 @@ class ResumeAnalysisSerializer(serializers.ModelSerializer):
         fields = [
             "id", "overall_score", "format_score", "keywords_score",
             "experience_score", "education_score", "impact_score",
-            "feedback", "status", "created_at", "updated_at"
+            "feedback", "suggestions", "ai_suggestions", "strengths",
+            "resume_quality_summary", "ats_analysis", "pattern_issues",
+            "ats_recommendations", "career_stage", "industry_match",
+            "status", "created_at", "updated_at"
         ]
         read_only_fields = fields
 

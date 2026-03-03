@@ -214,6 +214,17 @@ class AnalyzeResumeView(generics.GenericAPIView):
             analysis.impact_score = analysis_result.get("impact_score", 75)
             analysis.feedback = analysis_result.get("feedback", "Analysis complete")
             analysis.suggestions = analysis_result.get("suggestions", [])
+            
+            # Save AI suggestions and analysis details
+            analysis.ai_suggestions = analysis_result.get("ai_suggestions", [])
+            analysis.ats_analysis = analysis_result.get("ats_analysis", {})
+            analysis.pattern_issues = analysis_result.get("pattern_issues", {})
+            analysis.strengths = analysis_result.get("strengths", [])
+            analysis.resume_quality_summary = analysis_result.get("resume_quality_summary", "")
+            analysis.career_stage = analysis_result.get("career_stage", "mid")
+            analysis.industry_match = analysis_result.get("industry_match", "")
+            analysis.ats_recommendations = analysis_result.get("ats_recommendations", [])
+            
             analysis.extracted_text = extracted_text
             analysis.status = "completed"
             analysis.save()
