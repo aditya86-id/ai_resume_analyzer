@@ -172,9 +172,26 @@ class JobDescriptionSerializer(serializers.ModelSerializer):
         model = JobDescription
         fields = [
             "id", "title", "company", "location", "salary_min", "salary_max",
-            "description", "required_skills", "created_at", "updated_at"
+            "description", "required_skills", "extracted_skills", "experience_level",
+            "skill_categories", "requirements_summary", "nlp_analysis",
+            "created_at", "updated_at"
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "extracted_skills", "experience_level", 
+                           "skill_categories", "requirements_summary", "nlp_analysis",
+                           "created_at", "updated_at"]
+
+
+class JobDescriptionDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for JobDescription with full analysis."""
+    
+    class Meta:
+        model = JobDescription
+        fields = [
+            "id", "title", "company", "location", "salary_min", "salary_max",
+            "description", "required_skills", "extracted_skills", "experience_level",
+            "skill_categories", "requirements_summary", "nlp_analysis",
+            "created_at", "updated_at"
+        ]
 
 
 # ========================================================
@@ -187,7 +204,23 @@ class JobMatchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = JobMatch
-        fields = ["id", "job", "match_score", "matched_skills", "missing_skills", "created_at"]
+        fields = [
+            "id", "job", "match_score", "matched_skills", "missing_skills",
+            "partial_matches", "match_quality", "match_details", "created_at"
+        ]
+        read_only_fields = fields
+
+
+class JobMatchDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for JobMatch."""
+    job = JobDescriptionDetailSerializer(read_only=True)
+    
+    class Meta:
+        model = JobMatch
+        fields = [
+            "id", "job", "match_score", "matched_skills", "missing_skills",
+            "partial_matches", "match_quality", "match_details", "created_at"
+        ]
         read_only_fields = fields
 
 

@@ -48,6 +48,11 @@ export const apiClient = {
         throw new Error(errorMessage);
       }
 
+      // Handle 204 No Content and other responses with no body
+      if (response.status === 204 || response.status === 200 && response.headers.get('content-length') === '0') {
+        return { success: true };
+      }
+
       return await response.json();
     } catch (error) {
       console.error('API Request Error:', error);

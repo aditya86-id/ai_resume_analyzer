@@ -471,15 +471,16 @@ Be thorough, specific, and provide suggestions the user can immediately act on."
 
 
 class JobMatchingService:
-    """Match resume skills against job requirements."""
+    """Match resume skills against job requirements using NLP."""
 
     @staticmethod
     def calculate_match_score(resume_skills: list, job_required_skills: list) -> tuple:
         """
         Calculate match score based on skill overlap.
+        This is now a legacy method - prefer using nlp_match_score.
         Returns (match_score, matched_skills, missing_skills)
         """
-        resume_skill_names = [s.lower() for s in [skill["name"] for skill in resume_skills]]
+        resume_skill_names = [s.lower() for s in [skill["name"] if isinstance(skill, dict) else skill for skill in resume_skills]]
         job_skills = [s.lower() for s in job_required_skills]
 
         matched_skills = [skill for skill in job_skills if skill in resume_skill_names]
@@ -491,6 +492,47 @@ class JobMatchingService:
             match_score = (len(matched_skills) / len(job_skills)) * 100
 
         return match_score, matched_skills, missing_skills
+    
+    @staticmethod
+    def nlp_match_score(resume_analysis_obj, job_description_obj) -> dict:
+        """
+        Calculate match score using NLP-based semantic matching.
+        Works with Django model objects.
+        """
+        try:
+            # Get resume skills
+            resume_skills = list(resume_analysis_obj.skills.values_list('name', flat=True))
+            resume_skill_dicts = [{'name': s} for s in resume_skills]
+            
+            # Get job description text
+            job_text = f"{job_description_obj.title} {job_description_obj.description}"
+            
+            # Use NLP service for matching
+            match_result = NLPService.match_resume_to_job(resume_skill_dicts, job_text)
+            
+            # Extract matched and missing skill names for database storage
+            matched_skill_names = [m['skill'] for m in match_result.get('matched_skills', [])]
+            missing_skill_names = match_result.get('missing_skills', [])
+            
+            return {
+                'match_score': match_result['overall_score'],
+                'matched_skills': matched_skill_names,
+                'missing_skills': missing_skill_names,
+                'match_details': match_result
+            }
+        except Exception as e:
+            logger.error(f"Error in NLP match score: {str(e)}")
+            # Fall back to basic matching
+            match_score, matched, missing = JobMatchingService.calculate_match_score(
+                resume_skill_dicts,
+                job_description_obj.required_skills
+            )
+            return {
+                'match_score': match_score,
+                'matched_skills': matched,
+                'missing_skills': missing,
+                'match_details': None
+            }
 
 
 class AuditService:
@@ -839,3 +881,268 @@ class ATSAnalyzerService:
         ])
         
         return analysis
+
+
+class NLPService:
+    """NLP-based job description processing and resume-job matching."""
+    
+    # Common job-related keywords for skill extraction
+    SKILL_KEYWORDS = {
+        'programming': ['python', 'javascript', 'java', 'c++', 'c#', 'php', 'ruby', 'golang', 'kotlin', 'typescript', 'swift', 'r', 'scala', 'perl'],
+        'web': ['react', 'angular', 'vue', 'node.js', 'django', 'flask', 'asp.net', 'rails', 'laravel', 'spring', 'fastapi', 'next.js', 'nuxt'],
+        'database': ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'cassandra', 'dynamodb', 'firebase', 'oracle'],
+        'cloud': ['aws', 'azure', 'gcp', 'docker', 'kubernetes', 'ci/cd', 'jenkins', 'gitlab', 'github actions', 'terraform'],
+        'data': ['data science', 'machine learning', 'deep learning', 'nlp', 'computer vision', 'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy'],
+        'devops': ['devops', 'linux', 'git', 'jenkins', 'ansible', 'puppet', 'chef', 'docker', 'kubernetes', 'monitoring', 'logging'],
+        'soft_skills': ['communication', 'leadership', 'teamwork', 'problem-solving', 'critical thinking', 'project management', 'agile', 'scrum'],
+    }
+    
+    EXPERIENCE_LEVELS = ['entry', 'entry-level', 'junior', 'mid', 'mid-level', 'mid level', 'senior', 'lead', 'principal', 'executive']
+    
+    @staticmethod
+    def extract_skills_from_text(text: str) -> list:
+        """
+        Extract skills from job description or resume text using keyword matching.
+        Returns list of extracted skills with confidence scores.
+        """
+        text_lower = text.lower()
+        extracted_skills = []
+        found_skills = set()
+        
+        for category, skills in NLPService.SKILL_KEYWORDS.items():
+            for skill in skills:
+                if skill in text_lower and skill not in found_skills:
+                    # Count occurrences
+                    count = text_lower.count(skill)
+                    confidence = min(100, (count / 3) * 100)  # Higher confidence if mentioned multiple times
+                    
+                    extracted_skills.append({
+                        'name': skill.title(),
+                        'category': category,
+                        'confidence': round(confidence, 1),
+                        'occurrences': count
+                    })
+                    found_skills.add(skill)
+        
+        # Sort by confidence and occurrences
+        extracted_skills.sort(key=lambda x: (-x['confidence'], -x['occurrences']))
+        return extracted_skills
+    
+    @staticmethod
+    def detect_experience_level(text: str) -> str:
+        """Detect required experience level from job description."""
+        text_lower = text.lower()
+        
+        # Check for explicit experience level mentions
+        for level in NLPService.EXPERIENCE_LEVELS:
+            if level in text_lower:
+                if any(word in level for word in ['principal', 'executive', 'director']):
+                    return 'senior'
+                elif any(word in level for word in ['lead', 'staff']):
+                    return 'senior'
+                elif 'senior' in level:
+                    return 'senior'
+                elif any(word in level for word in ['mid', 'level']):
+                    return 'mid'
+                elif 'junior' in level:
+                    return 'junior'
+                elif 'entry' in level:
+                    return 'entry'
+        
+        # Check for experience year mentions
+        import re
+        years_match = re.findall(r'(\d+)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?(?:experience|exp)', text_lower)
+        if years_match:
+            years = max(int(y) for y in years_match)
+            if years >= 10:
+                return 'senior'
+            elif years >= 5:
+                return 'mid'
+            elif years >= 2:
+                return 'junior'
+            else:
+                return 'entry'
+        
+        return 'mid'  # Default to mid-level
+    
+    @staticmethod
+    def calculate_semantic_similarity(resume_skills: list, job_skills: list) -> dict:
+        """
+        Calculate semantic similarity between resume and job skills.
+        Uses fuzzy string matching and synonym detection.
+        """
+        from fuzzywuzzy import fuzz
+        
+        resume_skill_names = [s['name'].lower() if isinstance(s, dict) else s.lower() for s in resume_skills]
+        job_skill_names = [s['name'].lower() if isinstance(s, dict) else s.lower() for s in job_skills]
+        
+        matched_skills = []
+        missing_skills = []
+        partial_matches = []
+        
+        # Calculate matches with fuzzy matching
+        for job_skill in job_skill_names:
+            best_match = None
+            best_score = 0
+            
+            for resume_skill in resume_skill_names:
+                # Use token set ratio for better matching
+                score = fuzz.token_set_ratio(resume_skill, job_skill)
+                if score > best_score:
+                    best_score = score
+                    best_match = resume_skill
+            
+            if best_score >= 90:  # Exact or near-exact match
+                matched_skills.append({
+                    'skill': job_skill,
+                    'match': best_match,
+                    'score': best_score
+                })
+            elif best_score >= 70:  # Partial match
+                partial_matches.append({
+                    'skill': job_skill,
+                    'match': best_match,
+                    'score': best_score
+                })
+            else:  # No match
+                missing_skills.append(job_skill)
+        
+        # Calculate overall match score
+        if len(job_skill_names) == 0:
+            overall_score = 100.0
+        else:
+            # Weight: 100% for exact matches, 50% for partial matches
+            exact_weight = len(matched_skills)
+            partial_weight = len(partial_matches) * 0.5
+            total_weight = exact_weight + partial_weight
+            overall_score = (total_weight / len(job_skill_names)) * 100
+        
+        return {
+            'overall_score': round(overall_score, 1),
+            'matched_skills': matched_skills,
+            'partial_matches': partial_matches,
+            'missing_skills': missing_skills,
+            'match_count': len(matched_skills),
+            'partial_count': len(partial_matches),
+            'missing_count': len(missing_skills),
+        }
+    
+    @staticmethod
+    def analyze_job_description(job_text: str) -> dict:
+        """
+        Comprehensive analysis of job description using NLP.
+        Extracts skills, experience level, and requirements.
+        """
+        analysis = {
+            'extracted_skills': [],
+            'experience_level': 'mid',
+            'skill_categories': {},
+            'requirements_summary': '',
+            'text_length': len(job_text),
+            'keyword_density': {},
+        }
+        
+        try:
+            # Extract skills
+            skills = NLPService.extract_skills_from_text(job_text)
+            analysis['extracted_skills'] = skills
+            
+            # Categorize skills
+            for skill in skills:
+                category = skill['category']
+                if category not in analysis['skill_categories']:
+                    analysis['skill_categories'][category] = []
+                analysis['skill_categories'][category].append(skill['name'])
+            
+            # Detect experience level
+            analysis['experience_level'] = NLPService.detect_experience_level(job_text)
+            
+            # Create requirements summary
+            text_lower = job_text.lower()
+            requirements = []
+            
+            if 'must have' in text_lower:
+                requirements.append("Have specific required skills/experience")
+            if 'nice to have' in text_lower or 'preferred' in text_lower:
+                requirements.append("Have some nice-to-have qualifications")
+            if 'remote' in text_lower:
+                requirements.append("Can work remotely")
+            if 'on-site' in text_lower or 'on site' in text_lower:
+                requirements.append("Work on-site")
+            if 'travel' in text_lower:
+                requirements.append("Willing to travel")
+            
+            analysis['requirements_summary'] = ' | '.join(requirements) if requirements else "See job description for details"
+            
+            # Calculate keyword density
+            words = re.findall(r'\b[a-z]+\b', text_lower)
+            if words:
+                from collections import Counter
+                word_freq = Counter(words)
+                # Get top 10 most frequent words (excluding common words)
+                common_words = {'the', 'a', 'an', 'and', 'or', 'is', 'are', 'to', 'for', 'of', 'in', 'on', 'with', 'by', 'at', 'this', 'that'}
+                filtered_freq = {w: c for w, c in word_freq.items() if w not in common_words and len(w) > 3}
+                top_words = dict(sorted(filtered_freq.items(), key=lambda x: x[1], reverse=True)[:10])
+                analysis['keyword_density'] = top_words
+            
+        except Exception as e:
+            logger.error(f"Error analyzing job description: {str(e)}")
+            analysis['error'] = str(e)
+        
+        return analysis
+    
+    @staticmethod
+    def match_resume_to_job(resume_skills: list, job_description_text: str) -> dict:
+        """
+        Match a resume to a job description using NLP techniques.
+        Returns detailed matching analysis.
+        """
+        try:
+            # Analyze job description
+            job_analysis = NLPService.analyze_job_description(job_description_text)
+            job_skills = job_analysis['extracted_skills']
+            
+            # Calculate semantic similarity
+            similarity = NLPService.calculate_semantic_similarity(resume_skills, job_skills)
+            
+            # Generate match report
+            match_report = {
+                'overall_score': similarity['overall_score'],
+                'matched_skills': similarity['matched_skills'],
+                'partial_matches': similarity['partial_matches'],
+                'missing_skills': similarity['missing_skills'],
+                'job_analysis': job_analysis,
+                'experience_level_match': 'good' if len(similarity['matched_skills']) > 0 else 'needs_improvement',
+                'match_quality': 'excellent' if similarity['overall_score'] >= 80 else (
+                    'good' if similarity['overall_score'] >= 60 else (
+                        'fair' if similarity['overall_score'] >= 40 else 'poor'
+                    )
+                ),
+                'recommendations': []
+            }
+            
+            # Generate recommendations
+            if similarity['overall_score'] >= 80:
+                match_report['recommendations'].append("You are well-qualified for this position. Your skills closely match the requirements.")
+            elif similarity['overall_score'] >= 60:
+                match_report['recommendations'].append("You meet most of the requirements. Consider acquiring the following skills:")
+                for missing in similarity['missing_skills'][:3]:
+                    match_report['recommendations'].append(f"  • {missing}")
+            else:
+                match_report['recommendations'].append("You could benefit from developing the following key skills:")
+                for missing in similarity['missing_skills'][:5]:
+                    match_report['recommendations'].append(f"  • {missing}")
+            
+            # Add experience level recommendation
+            if job_analysis['experience_level'] == 'senior' and similarity['overall_score'] < 70:
+                match_report['recommendations'].append("This role requires senior-level experience. Consider building more experience first.")
+            
+            return match_report
+            
+        except Exception as e:
+            logger.error(f"Error matching resume to job: {str(e)}")
+            return {
+                'overall_score': 0,
+                'error': str(e),
+                'recommendations': ['Error occurred during matching analysis']
+            }

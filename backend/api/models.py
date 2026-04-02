@@ -148,6 +148,23 @@ class JobDescription(models.Model):
     description = models.TextField()
     required_skills = models.JSONField(default=list)  # List of required skill names
     
+    # NLP analysis fields
+    extracted_skills = models.JSONField(default=list)  # NLP-extracted skills with confidence scores
+    experience_level = models.CharField(
+        max_length=50,
+        choices=[
+            ("entry", "Entry-level"),
+            ("junior", "Junior"),
+            ("mid", "Mid-level"),
+            ("senior", "Senior"),
+            ("executive", "Executive"),
+        ],
+        default="mid"
+    )
+    skill_categories = models.JSONField(default=dict)  # Categorized skills
+    requirements_summary = models.TextField(blank=True)  # Summary of key requirements
+    nlp_analysis = models.JSONField(default=dict)  # Full NLP analysis data
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -167,6 +184,20 @@ class JobMatch(models.Model):
     )
     matched_skills = models.JSONField(default=list)  # List of matched skill names
     missing_skills = models.JSONField(default=list)  # List of missing skill names
+    
+    # NLP matching details
+    partial_matches = models.JSONField(default=list)  # Skills with partial matches
+    match_details = models.JSONField(default=dict)  # Detailed matching analysis from NLP
+    match_quality = models.CharField(
+        max_length=20,
+        choices=[
+            ("excellent", "Excellent"),
+            ("good", "Good"),
+            ("fair", "Fair"),
+            ("poor", "Poor"),
+        ],
+        default="good"
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
 

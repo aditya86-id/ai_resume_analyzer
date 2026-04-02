@@ -32,6 +32,8 @@ export const jobsAPI = {
   create: (data) => apiClient.post('/jobs/', data),
   update: (id, data) => apiClient.put(`/jobs/${id}/`, data),
   delete: (id) => apiClient.delete(`/jobs/${id}/`),
+  analyze: (data) => apiClient.post('/jobs/analyze/', data),
+  matchResume: (jobId, data) => apiClient.post(`/jobs/${jobId}/match_resume/`, data),
 };
 
 // Templates
